@@ -42,3 +42,6 @@ wheels/
 
 # Logs
 *.log
+
+# Reports
+undervalued_stocks_*.html

@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-短线交易回测系统 - 数据获取模块
-获取A股历史数据用于回测
+信息获取模块 - 数据获取接口
+统一管理所有数据获取功能
 """
 
 import sys
@@ -17,8 +17,8 @@ except ImportError:
     AKSHARE_AVAILABLE = False
 
 
-class ShortTermDataFetcher:
-    """短线交易数据获取器"""
+class DataFetcher:
+    """统一数据获取器"""
     
     def __init__(self):
         self.use_real_data = AKSHARE_AVAILABLE
@@ -84,6 +84,51 @@ class ShortTermDataFetcher:
             print(f"获取股票 {code} 历史数据失败: {e}")
             return None
     
+    def get_stock_spot_data(self) -> Optional[pd.DataFrame]:
+        """获取A股实时行情数据"""
+        if not self.use_real_data:
+            return None
+        
+        try:
+            df = ak.stock_zh_a_spot_em()
+            if df is not None and not df.empty:
+                print(f"✅ 成功获取 {len(df)} 只股票实时数据")
+                return df
+            return None
+        except Exception as e:
+            print(f"❌ 获取实时行情数据失败: {e}")
+            return None
+    
+    def get_financial_data(self) -> Optional[pd.DataFrame]:
+        """获取财务报表数据"""
+        if not self.use_real_data:
+            return None
+        
+        try:
+            profit_df = ak.stock_yjbb_em(date="20231231")
+            if profit_df is not None and not profit_df.empty:
+                print(f"✅ 成功获取业绩报表数据")
+                financial_df = profit_df.copy()
+                
+                if '股票代码' in financial_df.columns:
+                    financial_df = financial_df.rename(columns={'股票代码': '代码'})
+                if '股票简称' in financial_df.columns:
+                    financial_df = financial_df.rename(columns={'股票简称': '财务名称'})
+                if '营业总收入-同比增长' in financial_df.columns:
+                    financial_df = financial_df.rename(columns={'营业总收入-同比增长': '营收同比'})
+                if '净利润-同比增长' in financial_df.columns:
+                    financial_df = financial_df.rename(columns={'净利润-同比增长': '净利润同比'})
+                if '净资产收益率' in financial_df.columns:
+                    financial_df = financial_df.rename(columns={'净资产收益率': 'ROE'})
+                if '所处行业' in financial_df.columns:
+                    financial_df = financial_df.rename(columns={'所处行业': '行业'})
+                
+                return financial_df
+            return None
+        except Exception as e:
+            print(f"⚠️ 获取财务数据失败: {e}")
+            return None
+    
     def get_trading_days(
         self, 
         start_date: str = None, 
@@ -118,4 +163,4 @@ class ShortTermDataFetcher:
 
 def get_data_fetcher():
     """获取数据获取器"""
-    return ShortTermDataFetcher()
+    return DataFetcher()
