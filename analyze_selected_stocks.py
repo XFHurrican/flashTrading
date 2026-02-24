@@ -12,11 +12,10 @@ from modules import (
 
 # 圈住的股票列表
 TARGET_STOCKS = [
-    ("600633", "浙数文化"),
-    ("603296", "华勤技术"),
-    ("300547", "川环科技"),
-    ("603728", "鸣志电器"),
-    ("600410", "华胜天成"),
+    ("000555", "神州信息"),
+    ("002400", "省广集团"),
+    ("600460", "士兰微"),
+    ("601318", "中国平安"),
 ]
 
 
@@ -82,24 +81,29 @@ def analyze_target_stocks():
     print("📊 详细因子得分".center(80))
     print("=" * 80)
     
-    factor_cols = ["代码", "名称", "factor_pe", "factor_pb", "factor_growth_revenue", "factor_growth_profit", "factor_quality_roe", "value_score", "growth_score", "quality_score"]
+    factor_cols = ["代码", "名称", "value_raw", "quality_raw", "growth_raw", "value", "quality", "growth"]
     available_factor_cols = [col for col in factor_cols if col in target_df.columns]
     
     if available_factor_cols:
         factor_df = target_df[available_factor_cols].copy()
         factor_df = factor_df.rename(columns={
-            "factor_pe": "PE因子",
-            "factor_pb": "PB因子",
-            "factor_growth_revenue": "营收增长因子",
-            "factor_growth_profit": "利润增长因子",
-            "factor_quality_roe": "ROE因子",
-            "value_score": "价值得分",
-            "growth_score": "成长得分",
-            "quality_score": "质量得分"
+            "value_raw": "价值因子(原始)",
+            "quality_raw": "质量因子(原始)",
+            "growth_raw": "成长因子(原始)",
+            "value": "价值因子(市值中性)",
+            "quality": "质量因子(市值中性)",
+            "growth": "成长因子(市值中性)"
         })
         
         print("\n📈 因子得分详情：")
         print(factor_df.to_string(index=False))
+        
+        print("\n" + "=" * 80)
+        print("💡 因子权重配置".center(80))
+        print("=" * 80)
+        print("\n  价值因子: 40%")
+        print("  质量因子: 30%")
+        print("  成长因子: 30%")
     else:
         print("\n⚠️ 未找到详细因子数据（可能缺少财务数据）")
     
