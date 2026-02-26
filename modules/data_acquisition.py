@@ -275,6 +275,15 @@ class DataFetcher:
             df = pd.DataFrame(all_xueqiu_data)
             if not df.empty:
                 print(f"✅ 雪球API成功获取 {len(df)} 只股票数据")
+                # 雪球API不返回行业信息，从新浪财经补充
+                try:
+                    industry_map = self._get_industry_map_from_sina()
+                    if industry_map:
+                        df['行业'] = df['代码'].map(industry_map).fillna('')
+                        non_empty = len(df[df['行业'] != ''])
+                        print(f"✅ 从新浪财经补充了 {non_empty} 只股票的行业信息")
+                except Exception as e:
+                    print(f"⚠️ 补充行业信息失败: {e}")
                 return df
         except Exception as e:
             print(f"⚠️ 雪球API获取数据失败: {e}")
@@ -732,6 +741,55 @@ class DataFetcher:
                 print(f"⚠️ Baostock获取交易日历失败: {e}")
         
         return None
+    
+    def _get_industry_map_from_sina(self) -> Optional[dict]:
+        """从新浪财经获取行业分类映射（内部方法，分页获取）"""
+        try:
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                'Referer': 'http://finance.sina.com.cn/'
+            }
+            
+            industry_map = {}
+            page = 1
+            
+            print("📊 从新浪财经获取行业分类...")
+            while True:
+                url = "http://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php/Market_Center.getHQNodeData"
+                params = {
+                    'page': page,
+                    'num': 80,
+                    'sort': 'symbol',
+                    'asc': 1,
+                    'node': 'hs_a',
+                    '_s_r_a': 'page'
+                }
+                
+                response = requests.get(url, params=params, headers=headers, timeout=15)
+                data = response.json()
+                
+                if not data:
+                    break
+                
+                for item in data:
+                    code = item.get('symbol', '')
+                    industry = item.get('industry', '')
+                    if code and industry:
+                        industry_map[code] = industry
+                
+                if len(data) < 80:
+                    break
+                
+                page += 1
+                if page > 100:
+                    break
+            
+            if industry_map:
+                print(f"✅ 从新浪财经获取了 {len(industry_map)} 只股票的行业分类")
+            return industry_map
+        except Exception as e:
+            print(f"⚠️ 从新浪财经获取行业分类失败: {e}")
+            return None
 
 
 def get_data_fetcher():

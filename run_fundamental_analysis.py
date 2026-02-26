@@ -51,7 +51,7 @@ def run_fundamental_analysis(top_percent: float = 0.1):
         
         ai_analyses = {}
         top_5 = result.head(5)
-        for i, (_, row) in enumerate[tuple[Hashable, Series]](top_5.iterrows(), 1):
+        for i, (_, row) in enumerate(top_5.iterrows(), 1):
             stock_info = {
                 '代码': row['代码'],
                 '名称': row['名称'],
